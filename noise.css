@@ -56,3 +56,11 @@
     transition: none;
   }
 }
+
+/* Sine tone controls */
+.tone {
+  width: min(280px, 80%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

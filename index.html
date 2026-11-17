@@ -33,6 +33,18 @@
       <button class="type-btn" type="button" role="radio" data-type="violet" aria-checked="false">Violet</button>
     </section>
 
+    <section class="tone">
+      <button id="tone-toggle" class="type-btn" type="button" role="switch" aria-checked="false">Sine tone: off</button>
+      <div class="volume">
+        <label for="tone-freq" class="volume-label">Tone frequency: <span id="tone-freq-value">40 Hz</span></label>
+        <input id="tone-freq" class="volume-slider" type="range" min="20" max="200" step="1" value="40">
+      </div>
+      <div class="volume">
+        <label for="tone-level" class="volume-label">Tone level</label>
+        <input id="tone-level" class="volume-slider" type="range" min="0" max="100" value="40">
+      </div>
+    </section>
+
     <section class="volume">
       <label for="volume" class="volume-label">Master volume</label>
       <input id="volume" class="volume-slider" type="range" min="0" max="100" value="30">

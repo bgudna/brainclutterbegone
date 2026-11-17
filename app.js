@@ -28,9 +28,15 @@
     status: document.getElementById("status"),
     name: document.getElementById("noise-name"),
     desc: document.getElementById("noise-desc"),
-    typeButtons: Array.prototype.slice.call(document.querySelectorAll(".type-btn")),
-    volume: document.getElementById("volume")
+    typeButtons: Array.prototype.slice.call(document.querySelectorAll(".type-btn[data-type]")),
+    volume: document.getElementById("volume"),
+    toneToggle: document.getElementById("tone-toggle"),
+    toneFreq: document.getElementById("tone-freq"),
+    toneFreqValue: document.getElementById("tone-freq-value"),
+    toneLevel: document.getElementById("tone-level")
   };
+
+  let toneOn = false;
 
   function renderType(type) {
     els.name.textContent = LABELS[type] || type;
@@ -45,6 +51,15 @@
     els.playBtn.setAttribute("aria-pressed", String(isPlaying));
     els.playBtn.setAttribute("aria-label", isPlaying ? "Pause" : "Play");
     els.status.textContent = isPlaying ? "Playing" : "Paused";
+  }
+
+  function renderTone() {
+    els.toneToggle.setAttribute("aria-checked", String(toneOn));
+    els.toneToggle.textContent = toneOn ? "Sine tone: on" : "Sine tone: off";
+  }
+
+  function renderToneFrequency(hz) {
+    els.toneFreqValue.textContent = Math.round(hz) + " Hz";
   }
 
   async function onPlayClick() {
@@ -69,17 +84,35 @@
     renderType(type);
   }
 
+  function onToneToggle() {
+    toneOn = !toneOn;
+    audio.setToneEnabled(toneOn);
+    renderTone();
+  }
+
   els.playBtn.addEventListener("click", onPlayClick);
   els.typeButtons.forEach(function (btn) {
     btn.addEventListener("click", onTypeClick);
+  });
+  els.toneToggle.addEventListener("click", onToneToggle);
+  els.toneFreq.addEventListener("input", function (event) {
+    audio.setToneFrequency(event.target.value);
+    renderToneFrequency(Number(event.target.value));
+  });
+  els.toneLevel.addEventListener("input", function (event) {
+    audio.setToneLevel(event.target.value);
   });
   els.volume.addEventListener("input", function (event) {
     audio.setVolume(event.target.value);
   });
 
-  // Initial state: paused, default colour, slider synced with the engine.
+  // Initial state: paused, tone off, sliders synced with the engine.
   // No audio is started here.
   renderType(audio.getType());
   renderPlayState(false);
+  renderTone();
+  renderToneFrequency(Number(els.toneFreq.value));
+  audio.setToneFrequency(els.toneFreq.value);
+  audio.setToneLevel(els.toneLevel.value);
   audio.setVolume(els.volume.value);
 })();

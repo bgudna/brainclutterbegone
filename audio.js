@@ -25,13 +25,30 @@
   // ---- Tuning ----
   const LOOP_LENGTH = 1 << 18;      // 262144 samples: about 5.9 s at 44.1 kHz, 5.5 s at 48 kHz
   const FADE_TIME = 0.3;            // seconds for play/pause and colour crossfades
-  const PEAK_LEVEL = 0.8;           // each colour is normalised to this peak
+  // Target average level per colour. Brown has a lot of energy in a few low-frequency
+  // components, so it needs a higher target to sound as loud as the others.
+  // Adjust these numbers to taste. Peaks above full scale are caught by the limiter.
+  const TARGET_RMS = { white: 0.2, pink: 0.2, brown: 0.35, blue: 0.2, violet: 0.2 };
   const MAX_LEVEL = 0.4;            // output gain at slider = 100
   const VOLUME_TIME_CONSTANT = 0.03;
+
+  // Sine tone layer
+  const TONE_MIN_HZ = 20;
+  const TONE_MAX_HZ = 200;
+  const TONE_DEFAULT_HZ = 40;
+  const TONE_DEFAULT_SLIDER = 40;   // 0..100
+  const TONE_MAX_LEVEL = 0.5;       // tone peak amplitude at slider = 100, before master volume
+  const TONE_GLIDE_TIME = 0.2;      // seconds for frequency changes
 
   let ctx = null;
   let fadeGain = null;
   let volumeGain = null;
+  let limiter = null;
+  let toneOsc = null;
+  let toneGain = null;
+  let toneEnabled = false;
+  let toneFrequency = TONE_DEFAULT_HZ;
+  let toneSlider = TONE_DEFAULT_SLIDER;
   let current = null;              // { source, gain, type }
   let currentType = DEFAULT_TYPE;
   let playing = false;
@@ -47,6 +64,12 @@
   function levelFromSlider(value) {
     const fraction = clamp(value, 0, 100) / 100;
     return MAX_LEVEL * fraction * fraction;
+  }
+
+  /** Target gain for the tone layer: zero when off, otherwise scaled by its level slider. */
+  function toneTargetGain() {
+    if (!toneEnabled) return 0;
+    return TONE_MAX_LEVEL * (clamp(toneSlider, 0, 100) / 100);
   }
 
   /** In-place iterative radix-2 FFT. Length must be a power of two. */
@@ -116,16 +139,20 @@
     return re; // holds n * x[t]
   }
 
-  /** Build a seamless stereo buffer for one colour, normalised to PEAK_LEVEL. */
+  /** Build a seamless stereo buffer for one colour, normalised to a per-colour RMS target. */
   function createNoiseBuffer(type) {
     const left = generateLoopChannel(type);
     const right = generateLoopChannel(type);
 
-    let peak = 0;
+    let sumSquares = 0;
     for (let i = 0; i < LOOP_LENGTH; i++) {
-      peak = Math.max(peak, Math.abs(left[i]), Math.abs(right[i]));
+      sumSquares += left[i] * left[i] + right[i] * right[i];
     }
-    const scale = peak > 0 ? PEAK_LEVEL / peak : 1;
+    const rms = Math.sqrt(sumSquares / (2 * LOOP_LENGTH));
+
+    // Scale to this colour's target average level. Peaks may exceed full scale;
+    // the output limiter handles them.
+    const scale = rms > 0 ? TARGET_RMS[type] / rms : 1;
 
     const buffer = ctx.createBuffer(2, LOOP_LENGTH, ctx.sampleRate);
     const outL = new Float32Array(LOOP_LENGTH);
@@ -175,8 +202,28 @@
     volumeGain = ctx.createGain();
     volumeGain.gain.value = levelFromSlider(volumeSlider);
 
-    fadeGain.connect(volumeGain);
+    // Safety limiter: catches peaks above -1 dBFS so louder colours can't clip.
+    limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = -1;
+    limiter.knee.value = 0;
+    limiter.ratio.value = 20;
+    limiter.attack.value = 0.003;
+    limiter.release.value = 0.05;
+
+    fadeGain.connect(limiter);
+    limiter.connect(volumeGain);
     volumeGain.connect(ctx.destination);
+
+    // Sine tone layer. It feeds fadeGain, so pause also mutes it.
+    toneGain = ctx.createGain();
+    toneGain.gain.value = toneTargetGain();
+
+    toneOsc = ctx.createOscillator();
+    toneOsc.type = "sine";
+    toneOsc.frequency.value = toneFrequency;
+    toneOsc.connect(toneGain);
+    toneGain.connect(fadeGain);
+    toneOsc.start();
   }
 
   /** Ramp a gain param from its current value to a target over FADE_TIME. */
@@ -262,7 +309,37 @@
     );
   }
 
+  /** Turn the sine tone on or off. Ramped smoothly, so no click. */
+  function setToneEnabled(enabled) {
+    toneEnabled = Boolean(enabled);
+    if (toneGain) {
+      toneGain.gain.setTargetAtTime(toneTargetGain(), ctx.currentTime, VOLUME_TIME_CONSTANT);
+    }
+  }
+
+  /** Set the tone frequency in Hz. Glides to the new value. */
+  function setToneFrequency(hz) {
+    toneFrequency = clamp(Number(hz), TONE_MIN_HZ, TONE_MAX_HZ);
+    if (toneOsc) {
+      const now = ctx.currentTime;
+      toneOsc.frequency.cancelScheduledValues(now);
+      toneOsc.frequency.setValueAtTime(toneOsc.frequency.value, now);
+      toneOsc.frequency.setTargetAtTime(toneFrequency, now, TONE_GLIDE_TIME);
+    }
+  }
+
+  /** Set the tone level from its 0..100 slider. */
+  function setToneLevel(value) {
+    toneSlider = clamp(Number(value), 0, 100);
+    if (toneGain) {
+      toneGain.gain.setTargetAtTime(toneTargetGain(), ctx.currentTime, VOLUME_TIME_CONSTANT);
+    }
+  }
+
   window.NoiseAudio = {
+    setToneEnabled: setToneEnabled,
+    setToneFrequency: setToneFrequency,
+    setToneLevel: setToneLevel,
     getType: getType,
     getTypes: getTypes,
     setType: setType,
