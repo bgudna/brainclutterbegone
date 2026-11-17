@@ -1,0 +1,58 @@
+/* Styles specific to the noise variant. Loaded after styles.css. */
+
+.noise-name {
+  font-size: clamp(40px, 10vw, 56px);
+  font-weight: 200;
+  letter-spacing: 0.04em;
+  color: var(--text-strong);
+}
+
+.noise-desc {
+  margin: -6px 0 8px;
+  min-height: 1.4em;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.types {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.type-btn {
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.type-btn:hover {
+  background: rgba(165, 180, 252, 0.08);
+}
+
+.type-btn[aria-checked="true"] {
+  background: rgba(165, 180, 252, 0.18);
+  border-color: rgba(165, 180, 252, 0.6);
+  color: var(--text-strong);
+}
+
+.type-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .type-btn {
+    transition: none;
+  }
+}

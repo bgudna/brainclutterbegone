@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Noise</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="noise.css">
+</head>
+<body>
+  <main class="app">
+
+    <header class="header">
+      <h1 class="title">Noise</h1>
+      <p id="status" class="status" aria-live="polite">Paused</p>
+    </header>
+
+    <section class="center">
+      <div id="noise-name" class="noise-name">Pink</div>
+      <p id="noise-desc" class="noise-desc"></p>
+
+      <button id="play" class="play" type="button" aria-pressed="false" aria-label="Play">
+        <span class="icon icon-play" aria-hidden="true"></span>
+        <span class="icon icon-pause" aria-hidden="true"><span></span><span></span></span>
+      </button>
+    </section>
+
+    <section class="types" role="radiogroup" aria-label="Noise colour">
+      <button class="type-btn" type="button" role="radio" data-type="white" aria-checked="false">White</button>
+      <button class="type-btn" type="button" role="radio" data-type="pink" aria-checked="true">Pink</button>
+      <button class="type-btn" type="button" role="radio" data-type="brown" aria-checked="false">Brown</button>
+      <button class="type-btn" type="button" role="radio" data-type="blue" aria-checked="false">Blue</button>
+      <button class="type-btn" type="button" role="radio" data-type="violet" aria-checked="false">Violet</button>
+    </section>
+
+    <section class="volume">
+      <label for="volume" class="volume-label">Master volume</label>
+      <input id="volume" class="volume-slider" type="range" min="0" max="100" value="30">
+    </section>
+
+    <footer class="notice">
+      <p>Listen at a comfortable level. Prolonged loud listening can damage hearing.</p>
+      <p>For experimentation only. This application does not provide medical treatment.</p>
+    </footer>
+
+  </main>
+
+  <script src="audio.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
