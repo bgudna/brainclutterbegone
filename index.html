@@ -8,54 +8,54 @@
   <link rel="stylesheet" href="noise.css">
 </head>
 <body>
-  <main class="app">
+  <main class="bar">
 
-    <header class="header">
+    <div class="brand">
       <h1 class="title">Noise</h1>
       <p id="status" class="status" aria-live="polite">Paused</p>
-    </header>
+    </div>
 
-    <section class="center">
-      <div id="noise-name" class="noise-name">Pink</div>
+    <button id="play" class="play" type="button" aria-pressed="false" aria-label="Play">
+      <span class="icon icon-play" aria-hidden="true"></span>
+      <span class="icon icon-pause" aria-hidden="true"><span></span><span></span></span>
+    </button>
+
+    <div class="field">
+      <label for="noise-type" class="label">Colour</label>
+      <select id="noise-type" class="select">
+        <option value="white">White</option>
+        <option value="pink" selected>Pink</option>
+        <option value="brown">Brown</option>
+        <option value="blue">Blue</option>
+        <option value="violet">Violet</option>
+      </select>
       <p id="noise-desc" class="noise-desc"></p>
+    </div>
 
-      <button id="play" class="play" type="button" aria-pressed="false" aria-label="Play">
-        <span class="icon icon-play" aria-hidden="true"></span>
-        <span class="icon icon-pause" aria-hidden="true"><span></span><span></span></span>
-      </button>
-    </section>
-
-    <section class="types" role="radiogroup" aria-label="Noise colour">
-      <button class="type-btn" type="button" role="radio" data-type="white" aria-checked="false">White</button>
-      <button class="type-btn" type="button" role="radio" data-type="pink" aria-checked="true">Pink</button>
-      <button class="type-btn" type="button" role="radio" data-type="brown" aria-checked="false">Brown</button>
-      <button class="type-btn" type="button" role="radio" data-type="blue" aria-checked="false">Blue</button>
-      <button class="type-btn" type="button" role="radio" data-type="violet" aria-checked="false">Violet</button>
-    </section>
-
-    <section class="tone">
-      <button id="tone-toggle" class="type-btn" type="button" role="switch" aria-checked="false">Sine tone: off</button>
-      <div class="volume">
-        <label for="tone-freq" class="volume-label">Tone frequency: <span id="tone-freq-value">40 Hz</span></label>
-        <input id="tone-freq" class="volume-slider" type="range" min="20" max="200" step="1" value="40">
+    <div class="field tone">
+      <button id="tone-toggle" class="chip" type="button" role="switch" aria-checked="false">Sine tone: off</button>
+      <div class="slider-group">
+        <label for="tone-freq" class="label">Freq <span id="tone-freq-value">40 Hz</span></label>
+        <input id="tone-freq" class="slider" type="range" min="20" max="200" step="1" value="40">
       </div>
-      <div class="volume">
-        <label for="tone-level" class="volume-label">Tone level</label>
-        <input id="tone-level" class="volume-slider" type="range" min="0" max="100" value="40">
+      <div class="slider-group">
+        <label for="tone-level" class="label">Level</label>
+        <input id="tone-level" class="slider" type="range" min="0" max="100" value="40">
       </div>
-    </section>
+    </div>
 
-    <section class="volume">
-      <label for="volume" class="volume-label">Master volume</label>
-      <input id="volume" class="volume-slider" type="range" min="0" max="100" value="30">
-    </section>
-
-    <footer class="notice">
-      <p>Listen at a comfortable level. Prolonged loud listening can damage hearing.</p>
-      <p>For experimentation only. This application does not provide medical treatment.</p>
-    </footer>
+    <div class="field">
+      <div class="slider-group">
+        <label for="volume" class="label">Master</label>
+        <input id="volume" class="slider" type="range" min="0" max="100" value="30">
+      </div>
+    </div>
 
   </main>
+
+  <footer class="notice">
+    <p>Listen at a comfortable level. Prolonged loud listening can damage hearing. For experimentation only. This application does not provide medical treatment.</p>
+  </footer>
 
   <script src="audio.js"></script>
   <script src="app.js"></script>

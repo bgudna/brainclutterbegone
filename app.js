@@ -15,20 +15,11 @@
     violet: "Strongest emphasis on high frequencies"
   };
 
-  const LABELS = {
-    white: "White",
-    pink: "Pink",
-    brown: "Brown",
-    blue: "Blue",
-    violet: "Violet"
-  };
-
   const els = {
     playBtn: document.getElementById("play"),
     status: document.getElementById("status"),
-    name: document.getElementById("noise-name"),
+    typeSelect: document.getElementById("noise-type"),
     desc: document.getElementById("noise-desc"),
-    typeButtons: Array.prototype.slice.call(document.querySelectorAll(".type-btn[data-type]")),
     volume: document.getElementById("volume"),
     toneToggle: document.getElementById("tone-toggle"),
     toneFreq: document.getElementById("tone-freq"),
@@ -39,11 +30,8 @@
   let toneOn = false;
 
   function renderType(type) {
-    els.name.textContent = LABELS[type] || type;
+    els.typeSelect.value = type;
     els.desc.textContent = DESCRIPTIONS[type] || "";
-    els.typeButtons.forEach(function (btn) {
-      btn.setAttribute("aria-checked", String(btn.dataset.type === type));
-    });
   }
 
   function renderPlayState(isPlaying) {
@@ -78,8 +66,8 @@
     }
   }
 
-  function onTypeClick(event) {
-    const type = event.currentTarget.dataset.type;
+  function onTypeChange(event) {
+    const type = event.target.value;
     audio.setType(type);
     renderType(type);
   }
@@ -91,9 +79,7 @@
   }
 
   els.playBtn.addEventListener("click", onPlayClick);
-  els.typeButtons.forEach(function (btn) {
-    btn.addEventListener("click", onTypeClick);
-  });
+  els.typeSelect.addEventListener("change", onTypeChange);
   els.toneToggle.addEventListener("click", onToneToggle);
   els.toneFreq.addEventListener("input", function (event) {
     audio.setToneFrequency(event.target.value);
