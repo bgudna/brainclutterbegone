@@ -39,6 +39,7 @@
     els.playBtn.setAttribute("aria-pressed", String(isPlaying));
     els.playBtn.setAttribute("aria-label", isPlaying ? "Pause" : "Play");
     els.status.textContent = isPlaying ? "Playing" : "Paused";
+    updateMediaSessionState(isPlaying);
   }
 
   function renderTone() {
@@ -78,6 +79,49 @@
     renderTone();
   }
 
+  // ---------- OS media controls (Media Session API) ----------
+
+  function setupMediaSession() {
+    if (!("mediaSession" in navigator)) return;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: "Noise",
+      artist: "Binaural",
+      album: "Noise generator"
+    });
+
+    navigator.mediaSession.setActionHandler("play", async function () {
+      if (!audio.isPlaying()) {
+        try {
+          await audio.play();
+          renderPlayState(true);
+        } catch (err) {
+          console.error("Playback failed:", err);
+        }
+      }
+    });
+
+    navigator.mediaSession.setActionHandler("pause", function () {
+      if (audio.isPlaying()) {
+        audio.pause();
+        renderPlayState(false);
+      }
+    });
+
+    // Some keyboards send a toggle-style event; map it to play/pause.
+    navigator.mediaSession.setActionHandler("stop", function () {
+      if (audio.isPlaying()) {
+        audio.pause();
+        renderPlayState(false);
+      }
+    });
+  }
+
+  function updateMediaSessionState(isPlaying) {
+    if (!("mediaSession" in navigator)) return;
+    navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+  }
+
   els.playBtn.addEventListener("click", onPlayClick);
   els.typeSelect.addEventListener("change", onTypeChange);
   els.toneToggle.addEventListener("click", onToneToggle);
@@ -94,6 +138,7 @@
 
   // Initial state: paused, tone off, sliders synced with the engine.
   // No audio is started here.
+  setupMediaSession();
   renderType(audio.getType());
   renderPlayState(false);
   renderTone();
