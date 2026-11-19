@@ -8,7 +8,11 @@
  * Graph, built on the first Play (inside a user gesture):
  *
  *   source (looping buffer) -> sourceGain (per-source, used for crossfades)
- *     -> fadeGain (play/pause envelope) -> volumeGain (master volume) -> destination
+ *     -> fadeGain (play/pause envelope) -> limiter -> volumeGain (master volume)
+ *     -> mediaDest (MediaStreamAudioDestinationNode) -> hidden <audio> element
+ *
+ * The output goes through an <audio> element so the browser registers the page
+ * as playing media, which lets OS media keys control it.
  *
  * Changing colour starts a new source and crossfades. Pause mutes via fadeGain
  * and the source keeps running silently, so no duplicate nodes accumulate.
@@ -29,7 +33,7 @@
   // components, so it needs a higher target to sound as loud as the others.
   // Adjust these numbers to taste. Peaks above full scale are caught by the limiter.
   const TARGET_RMS = { white: 0.2, pink: 0.2, brown: 0.35, blue: 0.2, violet: 0.2 };
-  const MAX_LEVEL = 0.4;            // output gain at slider = 100
+  const MAX_LEVEL = 0.8;            // output gain at slider = 100
   const VOLUME_TIME_CONSTANT = 0.03;
 
   // Sine tone layer
@@ -44,6 +48,8 @@
   let fadeGain = null;
   let volumeGain = null;
   let limiter = null;
+  let mediaDest = null;            // MediaStreamAudioDestinationNode, feeds the <audio> element
+  let mediaEl = null;              // hidden <audio> element that browsers see as media
   let toneOsc = null;
   let toneGain = null;
   let toneEnabled = false;
@@ -212,7 +218,18 @@
 
     fadeGain.connect(limiter);
     limiter.connect(volumeGain);
-    volumeGain.connect(ctx.destination);
+
+    // Route the output through an <audio> element so the browser registers
+    // this page as playing media. Don't also connect to ctx.destination,
+    // or the sound would play twice.
+    mediaDest = ctx.createMediaStreamDestination();
+    volumeGain.connect(mediaDest);
+
+    mediaEl = document.createElement("audio");
+    mediaEl.srcObject = mediaDest.stream;
+    mediaEl.hidden = true;
+    mediaEl.setAttribute("playsinline", "");
+    document.body.appendChild(mediaEl);
 
     // Sine tone layer. It feeds fadeGain, so pause also mutes it.
     toneGain = ctx.createGain();
@@ -277,6 +294,11 @@
   async function play() {
     buildGraph();
 
+    // Start the media element while the user gesture is still active.
+    mediaEl.play().catch(function (err) {
+      console.error("Media element failed to start:", err);
+    });
+
     if (ctx.state !== "running") {
       await ctx.resume();
     }
@@ -295,6 +317,12 @@
 
     rampGain(fadeGain.gain, 0, ctx.currentTime);
     playing = false;
+
+    // Let the fade-out finish, then stop the element. It only stops if
+    // playback hasn't resumed in the meantime.
+    setTimeout(function () {
+      if (!playing && mediaEl) mediaEl.pause();
+    }, FADE_TIME * 1000 + 50);
   }
 
   /** Set master volume from the 0..100 slider. Smoothed to avoid zipper noise. */
